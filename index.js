@@ -1,5 +1,7 @@
-$('document').ready(function(){
+// one data variable for each column
+var data1, data2, data3, data4;
 
+$('document').ready(function(){
   //also can use: .submit( handler )
   $('#search').on( "submit", function(event){
     event.preventDefault();
@@ -7,52 +9,72 @@ $('document').ready(function(){
     search(query);
   });
 
-  //looks like this only works in Firefox
-  function search(query){
-    var queryUrl = 'https://en.wikipedia.org/w/api.php'
-     + '?action=query'
-     + '&list=search'
-     + '&srsearch=' + query
-     + '&srprop=snippet'
-     + '&prop=info'
-     + '&srlimit=20';
-
-    console.log(queryUrl);
-
-    $.ajax({
-      url: queryUrl,
-      data: {
-          format: 'json'
-      },
-      dataType: 'jsonp',
-      method: 'GET',
-      headers: { 'Api-User-Agent': 'CoolSearchTool'},
-      error: function(jqXHR,exception){
-        console.log(jqXHR.responseText);
-      },
-      success: function(data){
-        console.log(data);
-        display(data);
-      }
+    $('#results').on("click", ".link", function(event){
+      var id = $(this).attr("id");
+      getLinks(id);
     });
-  }
+});
 
-  function display(data){
-    var html = "";
-    var counter = 0;
-    data.query.search.forEach(function(entry){
+//query is the word to be searched
+function search(query){
+    var queryUrl = 'https://en.wikipedia.org/w/api.php'
+     + '?action=query' + '&list=search' + '&srsearch=' + query + '&srprop=snippet' + '&prop=info' + '&srlimit=20';
 
-    console.log(entry.title);
+  $.ajax({
+    url: queryUrl,
+    data: {
+        format: 'json'
+    },
+    dataType: 'jsonp',
+    method: 'GET',
+    headers: { 'Api-User-Agent': 'CoolSearchTool'},
+    error: function(jqXHR,exception){
+      console.log(jqXHR.responseText);
+    },
+    success: function(data){
+      console.log(data);
+      col1 = data;
+      displaySearch(data);
+    }
+  });
+}
 
-    html+='<div class="fl w-100 w-50-m w-25-l pa3-m pa4-l">' + '<h5>' + entry.title + '</h5>'
-    + '<p class="f6 lh-copy">' + entry.snippet + '</p>' + '</div>';
+function getLinks(id){
+  var queryUrl = 'https://en.wikipedia.org/w/api.php'
+  + '?action=query&format=json&prop=info&list=&gblpageid=' + id + '&generator=backlinks&gbllimit=20';
+  console.log(queryUrl);
+  $.ajax({
+    url: queryUrl,
+    data: {
+        format: 'json'
+    },
+    dataType: 'jsonp',
+    method: 'GET',
+    headers: { 'Api-User-Agent': 'CoolSearchTool'},
+    error: function(jqXHR,exception){
+      console.log(jqXHR.responseText);
+    },
+    success: function(data){
+      console.log(data);
+      displayLinks(data);
+    }
+  });
+}
 
+function displaySearch(data){
+  var html = "";
+  data.query.search.forEach(function(page){
+    html+='<div class="">' + '<h5 class="link" id=' + page.pageid + '>' + page.title + '</h5>' + '</div>'
 
   });
-    $('#results').html(html);
+  $('#search-results').html(html);
+}
+
+function displayLinks(data){
+  var html = "";
+  for (var page in data.query.pages) {
+    var info = data.query.pages[page];
+    html+='<div class="">' + '<h5 class="link" id=' + info.pageid + '>' + info.title + '</h5>' + '</div>';
   }
-
-
-
-
-});
+  $('#link-results').html(html);
+}
